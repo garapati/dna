@@ -5,6 +5,7 @@ var gulp = require('gulp'),                   // globel | gulp core
     notify = require('gulp-notify'),          // globel | send notifications to windows
     plumber = require('gulp-plumber'),        // globel | disable interuption
     browserSync = require('browser-sync'),    // globel | inject code to all devices
+    reload = browserSync.reload,
 
     stylus = require('gulp-stylus'),          // css | stylus compiler
     minifycss = require('gulp-minify-css'),   // css | minify the css files 
@@ -21,20 +22,33 @@ var path = {
     dev : {
         app     : 'src',
         stylus  : 'src/**/*.styl',
-        jade    : 'src/**/*.jade',
-        assets  : ['src/**/*', '!**/*.js', '!**/*.styl', '!**/*.jade'],
+        jade    : ['src/**/*.jade', '!src/**/_*.jade'],
+        images  : 'src/images/**/*',
         coffee  : 'src/**/*.coffee',
-        script  : 'src/**/*.js'
+        script  : 'src/**/*.js',
+        vendor  : ['vendors/**/*', '!vendors/**/*.css']
     },
     build : {
         app     : './build/',
         css     : './build/assets/app/',
         js      : './build/assets/app/',
-        img     : './build/assets/app/images/',
-        fonts   : './build/assets/app/fonts/'
-        vendor  : './build/assets/vendor/'
+        images  : './build/assets/app/images/',
+        fonts   : './build/assets/app/fonts/',
+        vendor  : './build/assets/vendors/'
     }
 };
+
+/*** vendor ***/
+gulp.task('vendor', function() {
+    gulp.src(path.dev.vendor)
+        .pipe(gulp.dest(path.build.vendor))               // where to put the file
+});
+
+/*** vendor ***/
+gulp.task('images', function() {
+    gulp.src(path.dev.images)
+        .pipe(gulp.dest(path.build.images))               // where to put the file
+});
 
 /*** 3. JADE TASK ********************************************************/
 gulp.task('jade', function() {
@@ -44,6 +58,7 @@ gulp.task('jade', function() {
         }))
         .pipe(gulp.dest(path.build.app))               // where to put the file
         .pipe(notify({message: 'jade processed!'}))  // notify when done
+        .pipe(reload({stream:true}));
 });
 
 /*** 4. STYLUS TASK ******************************************************/
@@ -61,6 +76,7 @@ gulp.task('stylus', function() {
         .pipe(rename('app-min.css'))   
         .pipe(gulp.dest(path.build.css))               // where to put the file
         .pipe(notify({message: 'stylus processed!'}))  // notify when done
+        .pipe(reload({stream:true}));
 });
 
 /*** 5. JS TASKS *********************************************************/
@@ -75,6 +91,7 @@ gulp.task('scripts', function() {
         .pipe(uglify())
         .pipe(gulp.dest(path.build.js))
         .pipe(notify({ message: 'scripts processed!'}))     // notify when done
+        .pipe(reload({stream:true}));
 });
 
 /*** 6. WATCH FILES ******************************************************/
@@ -86,7 +103,7 @@ gulp.task('watch', function(){
 });
 
 /*** 7. BROWSER SYNC ******************************************************/
-gulp.task('serve', ['watch', 'jade', 'stylus', 'scripts'], function() {
+gulp.task('serve', ['watch', 'vendor', 'images', 'jade', 'stylus', 'scripts'], function() {
     browserSync({
         server: "./build"
     });
