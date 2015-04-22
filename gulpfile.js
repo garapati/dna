@@ -7,6 +7,8 @@ var gulp = require('gulp'),                   // globel | gulp core
     browserSync = require('browser-sync'),    // globel | inject code to all devices
     reload = browserSync.reload,
 
+    imagemin = require('gulp-imagemin'),
+
     stylus = require('gulp-stylus'),          // css | stylus compiler
     minifycss = require('gulp-minify-css'),   // css | minify the css files 
     uncss = require('gulp-uncss'),            // css | remove un wanted css
@@ -15,21 +17,23 @@ var gulp = require('gulp'),                   // globel | gulp core
     
     coffee = require('gulp-coffee'),          // js | coffeefy js
     uglify = require('gulp-uglify'),          // js | minify js
-    es = require('event-stream');             // js | combine js
+    es = require('event-stream'),             // js | combine js
+    del = require('del');
 
 /*** 2. FILE DESTINATIONS ************************************************/
 var path = {
     dev : {
-        app     : 'src',
+        app     : 'src/**/*',
         stylus  : 'src/**/*.styl',
         jade    : ['src/**/*.jade', '!src/**/_*.jade'],
-        images  : 'src/images/**/*',
+        images  : 'src/assets/app/images/**/*.png',
         coffee  : 'src/**/*.coffee',
         script  : 'src/**/*.js',
         vendor  : ['vendors/**/*', '!vendors/**/*.css']
     },
     build : {
         app     : './build/',
+        from_app: './build/assets/app/',
         css     : './build/assets/app/',
         js      : './build/assets/app/',
         images  : './build/assets/app/images/',
@@ -38,22 +42,24 @@ var path = {
     }
 };
 
+// Copy all static images
+gulp.task('images', function() {
+  return gulp.src(path.dev.images)
+    // Pass in options to the task
+    .pipe(imagemin({optimizationLevel: 5}))
+    .pipe(gulp.dest(path.build.images));
+});
+
 /*** vendor ***/
 gulp.task('vendor', function() {
     gulp.src(path.dev.vendor)
         .pipe(gulp.dest(path.build.vendor))               // where to put the file
 });
 
-/*** vendor ***/
-gulp.task('images', function() {
-    gulp.src(path.dev.images)
-        .pipe(gulp.dest(path.build.images))               // where to put the file
-});
-
 /*** 3. JADE TASK ********************************************************/
 gulp.task('jade', function() {
     gulp.src(path.dev.jade)
-    	.pipe(jade({
+        .pipe(jade({
             pretty: true
         }))
         .pipe(gulp.dest(path.build.app))               // where to put the file
@@ -66,9 +72,9 @@ gulp.task('stylus', function() {
     gulp.src(path.dev.stylus)                         // get the files
         .pipe(plumber())                                // make sure gulp keeps running on errors
         .pipe(stylus({                                  // compile all stylus
-		    'include css': true,                        // @import css files in stylus files
-		  }))
-    	.pipe(concat('app.css')) 
+            'include css': true,                        // @import css files in stylus files
+          }))
+        .pipe(concat('app.css')) 
         .pipe(uncss({
             html: ['build/**/*.html']
         }))
